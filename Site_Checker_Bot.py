@@ -13,6 +13,7 @@ filter_element_one = {}
 filter_element_two = {}
 filter_element_three = {}
 list_of_category1 = []
+num = 0
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -35,21 +36,17 @@ def choose_language(message):
 
 @bot.message_handler(commands=['category'])
 def big_category_choose(message):
-    print(language)
     if language == "LV":
         latvian_list = ["Darbs un bizness", "Transports", "Nekustamie īpašumi", "Celtniecība", "Elektrotehnika",
                         "Drēbes, apavi", "Mājai", "Ražošana", "Bērniem", "Dzīvnieki", "Lauksaimniecība",
                         "Atpūta, hobiji"]
         big_category_name(message, latvian_list)
-        print("LV+")
     elif language == "RU":
         russian_list = ["Работа и бизнес", "Транспорт", "Недвижимость", "Строительство", "Электротехника",
                         "Одежда, обувь",
                         "Для дома", "Производство", "Для детей", "Животные", "Сельское хозяйство", "Отдых, увлечения"]
         big_category_name(message, russian_list)
-        print("RU+")
     else:
-        print("Difrent")
         bot.send_message(message.chat.id, "You didn't have chosen language")
         choose_language(message)
 
@@ -74,14 +71,10 @@ def big_category_name(message, list_of_category):
     markup.add(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)
     bot.send_message(message.chat.id, "Now, please enter big category, where are yours element:"
                                       "\nIf you want change language enter /lan", reply_markup=markup)
-    for i in list_of_category:
-        print(i)
-    print(message.text)
 
 
 @bot.message_handler(commands=['filter', "filtering"])
 def filter_menu(message):
-    global filter_element_one, filter_element_two, filter_element_three
     if language == "":
         bot.send_message(message.chat.id, "You didn't have chosen language")
         choose_language(message)
@@ -92,9 +85,54 @@ def filter_menu(message):
         bot.send_message(message.chat.id, "You can choose maximum three filtering elements "
                                           "(or you may without filtering)"
                                           "\nWrite text and filter you want "
-                                          "(Example: 'Meklējamais vārds vai frāze: Liela')"
+                                          "(Example: '1) TEXT : TEXT_TWO')"
                                           "\nIf you want min and max (write 'min'-'max')")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+        b1 = types.KeyboardButton("Filter one")
+        b2 = types.KeyboardButton("Filter two")
+        b3 = types.KeyboardButton("Filter tree")
+        b4 = types.KeyboardButton("Without filter")
+        markup.add(b1, b2, b3, b4)
+        bot.send_message(message.chat.id, "Now, please enter big category, where are yours element:"
+                                          "\nIf you want change language enter /lan", reply_markup=markup)
+
     print(language, big_category, medium_category, small_category, extra_category)
+
+
+def filter_check(message):
+    global filter_element_one, filter_element_two, filter_element_three
+    if "one" in message.text:
+        return 1
+    elif "two" in message.text:
+        return 2
+    elif "tree" in message.text:
+        return 3
+    else:
+        return 4
+
+
+def filter_element(message, number):
+    global filter_element_one, filter_element_two, filter_element_three
+    element_one = message.text.partition(':')[0].strip()
+    element_two = message.text.partition(':')[2].strip()
+    if "-" in element_two:
+        minimum = element_two.partition('-')[0].strip()
+        maximum = element_two.partition('-')[2].strip()
+        if number == 1:
+            filter_element_one[element_one] = minimum, maximum
+        elif number == 2:
+            filter_element_two[element_one] = minimum, maximum
+        elif number == 3:
+            filter_element_three[element_one] = minimum, maximum
+    else:
+        if number == 1:
+            filter_element_one[element_one] = element_two
+        elif number == 2:
+            filter_element_two[element_one] = element_two
+        elif number == 3:
+            filter_element_three[element_one] = element_two
+        else:
+            print("404")
 
 
 def contruating_path(message, path):
@@ -110,7 +148,6 @@ def contruating_path(message, path):
         small_category = path_list[1].strip().capitalize()
         extra_category = path_list[2].strip().capitalize()
     else:
-        print(len(path_list))
         choose_category_1(message)
     filter_menu(message)
 
@@ -123,7 +160,7 @@ def choose_category_1(message):
 @bot.message_handler(content_types=['text'])
 def bot_message(message):
     if message.chat.type == 'private':
-        global language, big_category
+        global language, big_category, num
         print(message.text)
         if message.text == "Latvian (LV)" or message.text == "Russian (RU)":
             language = str(message.text)[-3:-1]
@@ -134,14 +171,28 @@ def bot_message(message):
             big_category = message.text
             bot.send_message(message.chat.id,
                              "Big category are selected(if you want to change = /category )\n"
-                             "Currently category: " + message.text,   reply_markup=ReplyKeyboardRemove())
+                             "Currently category: " + message.text, reply_markup=ReplyKeyboardRemove())
             choose_category_1(message)
         if "/" in message.text and language != "" and big_category != "":
-            print(1111)
             path = message.text
             contruating_path(message, path)
-        if ":" in message.text:
-            print(2222)
+        if ":" in message.text and num != 0:
+            filter_element(message, num)
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+            b1 = types.KeyboardButton("Filter one")
+            b2 = types.KeyboardButton("Filter two")
+            b3 = types.KeyboardButton("Filter tree")
+            b4 = types.KeyboardButton("Done")
+            markup.add(b1, b2, b3, b4)
+            bot.send_message(message.chat.id, "Dededed", reply_markup=markup)
+            print(filter_element_one, filter_element_two, filter_element_three)
+        if message.text in ["Filter one", "Filter two", "Filter tree", "Without filter", "Done"] and language != "" and big_category != "":
+            if message.text == "Done" or message.text == "Without filter":
+                bot.send_message(message.chat.id, "Ok", reply_markup=ReplyKeyboardRemove())
+                print(filter_element_one, filter_element_two, filter_element_three)
+            else:
+                bot.send_message(message.chat.id, "Now write filter (Example: TEXT:TEXT_TWO): ", reply_markup=ReplyKeyboardRemove())
+                num = filter_check(message)
 
 
 bot.infinity_polling()
