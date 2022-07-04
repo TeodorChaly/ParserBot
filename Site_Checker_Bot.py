@@ -1,8 +1,11 @@
 import telebot
 from telebot import types
 from telebot.types import ReplyKeyboardRemove
+from AutomatedWeb import Site_Checking
 
 bot = telebot.TeleBot("TOKEN")
+
+
 
 language = ""
 big_category = ""
@@ -16,12 +19,14 @@ list_of_category1 = []
 num = 0
 
 
+
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
+    print(message.chat.id)
+    print(message)
     bot.send_message(message.chat.id, "Welcome to site parser!")
 
     choose_language(message)
-
 
 @bot.message_handler(commands=['lan', 'language'])
 def choose_language(message):
@@ -32,7 +37,6 @@ def choose_language(message):
     markup.add(rus_lan, lat_lan)
 
     bot.send_message(message.chat.id, "Choose language (LV or RU)?", reply_markup=markup)
-
 
 @bot.message_handler(commands=['category'])
 def big_category_choose(message):
@@ -153,8 +157,11 @@ def contruating_path(message, path):
 
 
 def choose_category_1(message):
+
     bot.send_message(message.chat.id, "Pelease, enter all cotegory to element, using slash /"
                                       " (example Vieglie auto/Audi):")
+
+
 
 
 @bot.message_handler(content_types=['text'])
@@ -190,9 +197,16 @@ def bot_message(message):
             if message.text == "Done" or message.text == "Without filter":
                 bot.send_message(message.chat.id, "Ok", reply_markup=ReplyKeyboardRemove())
                 print(filter_element_one, filter_element_two, filter_element_three)
+                Site_Checking.main(language, big_category, medium_category, small_category, extra_category,
+                                   filter_element_one, filter_element_two, filter_element_three)
             else:
                 bot.send_message(message.chat.id, "Now write filter (Example: TEXT:TEXT_TWO): ", reply_markup=ReplyKeyboardRemove())
                 num = filter_check(message)
 
 
 bot.infinity_polling()
+
+
+# Min-max
+# Fix : in filters
+# Stop function
